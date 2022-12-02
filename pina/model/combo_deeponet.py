@@ -55,8 +55,10 @@ class ComboDeepONet(torch.nn.Module):
         return reduce(sum, nets_input_variables, self._nets)
 
     def forward(self, x):
-        nets_outputs = [net(x.extract(net.input_variables)) for net in nets]
-        aggregated_nets_outputs = self._aggregator(nets_outputs)
+        nets_outputs = [
+            net(x.extract(net.input_variables)) for net in self._nets
+        ]
+        aggregated_nets_outputs = self._aggregator(torch.stack(nets_outputs))
 
         output_ = self.reduction(aggregated_nets_outputs)
         output_ = output_.as_subclass(LabelTensor)
