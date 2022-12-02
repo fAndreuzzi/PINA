@@ -19,14 +19,15 @@ if __name__ == "__main__":
 
     poisson_problem = ParametricPoisson()
 
-    combos = args.combos.split(",")
-    for c in "".join(combos):
-        if c not in poisson_problem.input_variables:
-            raise ValueError(
-                "Combinations should be (overlapping) subsets of input variables, {} is not an input variable".format(
-                    c
+    combos = tuple(map(lambda combo: combo.split('-'), args.combos.split(",")))
+    for combo in combos:
+        for variable in combo:
+            if variable not in poisson_problem.input_variables:
+                raise ValueError(
+                    "Combinations should be (overlapping) subsets of input variables, {} is not an input variable".format(
+                        c
+                    )
                 )
-            )
     networks = spawn_combo_networks(
         combos, [10, 10, 10, 10], Softplus
     )
@@ -36,12 +37,12 @@ if __name__ == "__main__":
     if args.s:
         pinn.span_pts(
             {"variables": ["x", "y"], "mode": "random", "n": 100},
-            {"variables": ["a", "b"], "mode": "grid", "n": 5},
+            {"variables": ["mu1", "mu2"], "mode": "grid", "n": 5},
             locations=["D"],
         )
         pinn.span_pts(
             {"variables": ["x", "y"], "mode": "grid", "n": 20},
-            {"variables": ["a", "b"], "mode": "grid", "n": 5},
+            {"variables": ["mu1", "mu2"], "mode": "grid", "n": 5},
             locations=["gamma1", "gamma2", "gamma3", "gamma4"],
         )
         pinn.train(10000, 100)
