@@ -52,8 +52,8 @@ class ComboDeepONet(torch.nn.Module):
 
     @property
     def input_variables(self):
-        nets_input_variables = map(lambda net: net.input_variables)
-        return reduce(sum, nets_input_variables, self._nets)
+        nets_input_variables = map(lambda net: net.input_variables, self._nets)
+        return reduce(sum, nets_input_variables)
 
     def forward(self, x):
         nets_outputs = [
