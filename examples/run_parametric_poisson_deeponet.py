@@ -15,11 +15,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--combos", help="DeepONet internal network combinations", type=str
     )
+    parser.add_argument(
+        "--aggregator", help="Aggregator for DeepONet", type=str
+    )
     args = parser.parse_args()
 
     poisson_problem = ParametricPoisson()
 
-    combos = tuple(map(lambda combo: combo.split('-'), args.combos.split(",")))
+    combos = tuple(map(lambda combo: combo.split("-"), args.combos.split(",")))
     for combo in combos:
         for variable in combo:
             if variable not in poisson_problem.input_variables:
@@ -28,10 +31,10 @@ if __name__ == "__main__":
                         c
                     )
                 )
-    networks = spawn_combo_networks(
-        combos, [10, 10, 10, 10], Softplus
+    networks = spawn_combo_networks(combos, [10, 10, 10, 10], Softplus)
+    model = ComboDeepONet(
+        networks, poisson_problem.output_variables, aggregator=args.aggregator
     )
-    model = ComboDeepONet(networks, poisson_problem.output_variables)
 
     pinn = PINN(poisson_problem, model, lr=0.006, regularizer=1e-6)
     if args.s:
