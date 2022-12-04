@@ -6,7 +6,6 @@ from pina import LabelTensor
 from pina.model import FeedForward
 
 from functools import reduce, partial
-import logging
 
 
 def spawn_combo_networks(combos, layers, func):
@@ -44,7 +43,7 @@ class ComboDeepONet(torch.nn.Module):
             "max": torch.max,
         }
         self._aggregator = partial(aggregator_funcs[aggregator], dim=0)
-        logging.info("Selected aggregator: {}".format(aggregator_funcs[aggregator]))
+        print("Selected aggregator: {}".format(aggregator_funcs[aggregator]))
 
     @staticmethod
     def _all_nets_same_output_layer_size(nets):
