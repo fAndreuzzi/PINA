@@ -15,7 +15,7 @@ class ParametricPoisson(SpatialProblem, ParametricProblem):
         force_term = torch.exp(
                 - 2*(input_.extract(['x']) - input_.extract(['mu1']))**2
                 - 2*(input_.extract(['y']) - input_.extract(['mu2']))**2)
-        return nabla(output_.extract(['u']), input_) - force_term
+        return nabla(output_, input_, d=['x', 'y']) - force_term
 
     def nil_dirichlet(input_, output_):
         value = 0.0
