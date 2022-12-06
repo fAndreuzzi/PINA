@@ -2,7 +2,12 @@ import argparse
 import torch
 from torch.nn import Softplus
 from pina import Plotter, LabelTensor, PINN
-from pina.model import FeedForward, ComboDeepONet, spawn_combo_networks
+from pina.model import (
+    FeedForward,
+    ComboDeepONet,
+    spawn_combo_networks,
+    check_combos,
+)
 from problems.parametric_poisson import ParametricPoisson
 
 
@@ -23,15 +28,9 @@ if __name__ == "__main__":
     poisson_problem = ParametricPoisson()
 
     combos = tuple(map(lambda combo: combo.split("-"), args.combos.split(",")))
-    for combo in combos:
-        for variable in combo:
-            if variable not in poisson_problem.input_variables:
-                raise ValueError(
-                    "Combinations should be (overlapping) subsets of input variables, {} is not an input variable".format(
-                        c
-                    )
-                )
-    networks = spawn_combo_networks(combos, [10, 10, 10, 10], Softplus)
+    check_combos(combos, poisson_problem.input_variables)
+    networks = spawn_combo_networks(combos, [10, 10, 10], 10, Softplus)
+
     model = ComboDeepONet(
         networks, poisson_problem.output_variables, aggregator=args.aggregator
     )

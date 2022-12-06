@@ -6,14 +6,29 @@ from pina import LabelTensor
 from pina.model import FeedForward
 
 from functools import reduce, partial
+import logging
 
 
-def spawn_combo_networks(combos, layers, func):
+logging.basicConfig(level=logging.INFO)
+
+
+def check_combos(combos, variables):
+    for combo in combos:
+        for variable in combo:
+            if variable not in variables:
+                raise ValueError(
+                    "Combinations should be (overlapping) subsets of input variables, {} is not an input variable".format(
+                        c
+                    )
+                )
+
+
+def spawn_combo_networks(combos, layers, output_dimension, func):
     return [
         FeedForward(
-            layers=layers[:-1],
+            layers=layers,
             input_variables=tuple(combo),
-            output_variables=layers[-1],
+            output_variables=output_dimension,
             func=func,
         )
         for combo in combos
@@ -27,14 +42,20 @@ class ComboDeepONet(torch.nn.Module):
         self.output_variables = output_variables
         self.output_dimension = len(output_variables)
 
+        self._init_aggregator(aggregator)
+
         if not ComboDeepONet._all_nets_same_output_layer_size:
             raise ValueError("All networks should have the same output size")
-        self._nets = nets
+        self._nets = torch.nn.ModuleList(nets)
 
-        self._aggregator = aggregator
         n_hidden_output = nets[0].layers[-1].out_features
         self.reduction = nn.Linear(n_hidden_output, self.output_dimension)
 
+        logging.info(
+            "Combo DeepONet children: {}".format(list(self.children()))
+        )
+
+    def _init_aggregator(self, aggregator_symbol):
         aggregator_funcs = {
             "+": torch.sum,
             "*": torch.prod,
@@ -42,13 +63,19 @@ class ComboDeepONet(torch.nn.Module):
             "min": torch.min,
             "max": torch.max,
         }
-        self._aggregator = partial(aggregator_funcs[aggregator], dim=0)
-        print("Selected aggregator: {}".format(aggregator_funcs[aggregator]))
+        if aggregator_symbol in aggregator_funcs:
+            aggregator_func = aggregator_funcs[aggregator_symbol]
+            self._aggregator = partial(aggregator_func, dim=0)
+            logging.info("Selected aggregator: {}".format(aggregator_func))
+        else:
+            raise ValueError(
+                "Invalid aggregator: {}".format(aggregator_symbol)
+            )
 
     @staticmethod
     def _all_nets_same_output_layer_size(nets):
         size = nets[0].layers[-1].out_features
-        return all([net.layers[-1].out_features == size for net in nets[1:]])
+        return all((net.layers[-1].out_features == size for net in nets[1:]))
 
     @property
     def input_variables(self):
@@ -56,9 +83,9 @@ class ComboDeepONet(torch.nn.Module):
         return reduce(sum, nets_input_variables)
 
     def forward(self, x):
-        nets_outputs = [
+        nets_outputs = tuple(
             net(x.extract(net.input_variables)) for net in self._nets
-        ]
+        )
         aggregated_nets_outputs = self._aggregator(torch.stack(nets_outputs))
 
         output_ = self.reduction(aggregated_nets_outputs)
