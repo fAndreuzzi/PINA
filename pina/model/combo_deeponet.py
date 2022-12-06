@@ -18,7 +18,7 @@ def check_combos(combos, variables):
             if variable not in variables:
                 raise ValueError(
                     "Combinations should be (overlapping) subsets of input variables, {} is not an input variable".format(
-                        c
+                        variable
                     )
                 )
 
