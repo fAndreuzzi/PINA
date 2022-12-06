@@ -9,4 +9,4 @@ from .feed_forward import FeedForward
 from .multi_feed_forward import MultiFeedForward
 from .deeponet import DeepONet
 from .network import Network
-from .combo_deeponet import ComboDeepONet, spawn_combo_networks
+from .combo_deeponet import ComboDeepONet

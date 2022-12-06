@@ -2,8 +2,8 @@ import argparse
 import torch
 from torch.nn import Softplus
 from pina import Plotter, LabelTensor, PINN
-from pina.model import (
-    FeedForward,
+from pina.model import FeedForward
+from pina.model.combo_deeponet import (
     ComboDeepONet,
     spawn_combo_networks,
     check_combos,
