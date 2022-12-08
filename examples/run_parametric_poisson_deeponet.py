@@ -33,10 +33,10 @@ if __name__ == "__main__":
 
     poisson_problem = ParametricPoisson()
 
-    hidden_layers = tuple(map(int), args.layers.split(','))
+    hidden_layers = list(map(int, args.layers.split(',')))
     combos = tuple(map(lambda combo: combo.split("-"), args.combos.split(",")))
     check_combos(combos, poisson_problem.input_variables)
-    networks = spawn_combo_networks(combos, hidde_layers, args.hidden, Softplus)
+    networks = spawn_combo_networks(combos, hidden_layers, args.hidden, Softplus)
 
     model = ComboDeepONet(
         networks, poisson_problem.output_variables, aggregator=args.aggregator
