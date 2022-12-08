@@ -48,9 +48,9 @@ if __name__ == "__main__":
             locations=["gamma1", "gamma2", "gamma3", "gamma4"],
         )
         pinn.train(10000, 100)
-        pinn.save_state("pina.poisson_param")
+        pinn.save_state("pina.poisson_param_{}".format(args.id_run))
     else:
-        pinn.load_state("pina.poisson_param")
+        pinn.load_state("pina.poisson_param_{}".format(args.id_run))
         plotter = Plotter()
         plotter.plot(pinn, fixed_variables={"mu1": 0, "mu2": 1}, levels=21)
         plotter.plot(pinn, fixed_variables={"mu1": 1, "mu2": -1}, levels=21)
