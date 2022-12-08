@@ -9,9 +9,6 @@ from functools import reduce, partial
 import logging
 
 
-logging.basicConfig(level=logging.INFO)
-
-
 def check_combos(combos, variables):
     for combo in combos:
         for variable in combo:
@@ -44,7 +41,7 @@ class ComboDeepONet(torch.nn.Module):
 
         self._init_aggregator(aggregator)
 
-        if not ComboDeepONet._all_nets_same_output_layer_size:
+        if not ComboDeepONet._all_nets_same_output_layer_size(nets):
             raise ValueError("All networks should have the same output size")
         self._nets = torch.nn.ModuleList(nets)
 
