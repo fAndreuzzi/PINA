@@ -62,8 +62,13 @@ class ComboDeepONet(torch.nn.Module):
         }
         if aggregator_symbol in aggregator_funcs:
             aggregator_func = aggregator_funcs[aggregator_symbol]
-            self._aggregator = partial(aggregator_func, dim=0)
+            aggregator = partial(aggregator_func, dim=0)
             logging.info("Selected aggregator: {}".format(aggregator_func))
+
+            if aggregator_symbol == 'min' or aggregator_symbol == 'max':
+                self._aggregator = lambda x: aggregator(x).values
+            else:
+                self._aggregator = aggregator
         else:
             raise ValueError(
                 "Invalid aggregator: {}".format(aggregator_symbol)
