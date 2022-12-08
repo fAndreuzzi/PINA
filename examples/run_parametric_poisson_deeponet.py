@@ -23,13 +23,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "--aggregator", help="Aggregator for DeepONet", type=str
     )
+    parser.add_argument(
+        "--hidden", help="Number of variables in the hidden DeepONet layer", type=int
+    )
+    parser.add_argument(
+        "--layers", help="Structure of the DeepONet partial layers", type=str
+    )
     args = parser.parse_args()
 
     poisson_problem = ParametricPoisson()
 
+    hidden_layers = tuple(map(int), args.layers.split(','))
     combos = tuple(map(lambda combo: combo.split("-"), args.combos.split(",")))
     check_combos(combos, poisson_problem.input_variables)
-    networks = spawn_combo_networks(combos, [10, 10, 10], 10, Softplus)
+    networks = spawn_combo_networks(combos, hidde_layers, args.hidden, Softplus)
 
     model = ComboDeepONet(
         networks, poisson_problem.output_variables, aggregator=args.aggregator
