@@ -20,13 +20,16 @@ def check_combos(combos, variables):
                 )
 
 
-def spawn_combo_networks(combos, layers, output_dimension, func):
+def spawn_combo_networks(
+    combos, layers, output_dimension, func, extra_features
+):
     return [
         FeedForward(
             layers=layers,
             input_variables=tuple(combo),
             output_variables=output_dimension,
             func=func,
+            extra_features=extra_features,
         )
         for combo in combos
     ]
@@ -65,7 +68,7 @@ class ComboDeepONet(torch.nn.Module):
             aggregator = partial(aggregator_func, dim=0)
             logging.info("Selected aggregator: {}".format(aggregator_func))
 
-            if aggregator_symbol == 'min' or aggregator_symbol == 'max':
+            if aggregator_symbol == "min" or aggregator_symbol == "max":
                 self._aggregator = lambda x: aggregator(x).values
             else:
                 self._aggregator = aggregator
