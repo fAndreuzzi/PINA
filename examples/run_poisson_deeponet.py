@@ -53,7 +53,8 @@ if __name__ == "__main__":
     hidden_layers = list(map(int, args.layers.split(',')))
     combos = tuple(map(lambda combo: combo.split("-"), args.combos.split(",")))
     check_combos(combos, poisson_problem.input_variables)
-    networks = spawn_combo_networks(combos, hidden_layers, args.hidden, Softplus, feat)
+    networks = spawn_combo_networks(combos, hidden_layers, args.hidden,
+                    Softplus, extra_features=feat)
 
     model = ComboDeepONet(
         networks, poisson_problem.output_variables, aggregator=args.aggregator
