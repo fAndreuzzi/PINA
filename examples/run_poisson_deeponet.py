@@ -15,7 +15,7 @@ import argparse
 import logging
 
 logging.basicConfig(
-    filename="poisson_deeponet.log", filemode='w', encoding="utf-8", level=logging.INFO
+    filename="poisson_deeponet.log", filemode='w', level=logging.INFO
 )
 
 
@@ -102,4 +102,10 @@ if __name__ == "__main__":
         plotter = Plotter()
         plotter.plot(pinn)
 
-    logging.info([neuron.weight for neuron in model._nets[0].model])
+    logging.info('Net 0')
+    logging.info(model._nets[0].model.weight)
+    logging.info(model._nets[0].model.bias)
+
+    logging.info('Net 1')
+    logging.info(model._nets[1].model.weight)
+    logging.info(model._nets[1].model.bias)
