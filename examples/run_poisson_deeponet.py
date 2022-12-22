@@ -55,6 +55,7 @@ if __name__ == "__main__":
     check_combos(combos, poisson_problem.input_variables)
     networks = spawn_combo_networks(combos, hidden_layers, args.hidden,
                     Softplus, extra_features=feat)
+    print(networks)
 
     model = ComboDeepONet(
         networks, poisson_problem.output_variables, aggregator=args.aggregator
