@@ -73,12 +73,14 @@ if __name__ == "__main__":
         input_variables=["x"],
         output_variables=1,
         extra_features=[myFeature("x")],
+        bias=False
     )
     y = FeedForward(
         layers=[],
         input_variables=["y"],
         output_variables=1,
         extra_features=[myFeature("y")],
+        bias=False
     )
     networks = [x, y]
 
