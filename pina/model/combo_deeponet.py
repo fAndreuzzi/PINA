@@ -20,15 +20,21 @@ def check_combos(combos, variables):
 
 
 def spawn_combo_networks(
-    combos, layers, output_dimension, func, extra_features
+    combos, layers, output_dimension, func, extra_feature, **ff_kwargs
 ):
+    if not ComboDeepONet.is_function(extra_feature):
+        extra_feature_func = lambda _: extra_feature
+    else:
+        extra_feature_func = extra_feature
+
     return [
         FeedForward(
             layers=layers,
             input_variables=tuple(combo),
             output_variables=output_dimension,
             func=func,
-            extra_features=extra_features,
+            extra_features=extra_feature_func(combo),
+            **ff_kwargs
         )
         for combo in combos
     ]
@@ -69,7 +75,7 @@ class ComboDeepONet(torch.nn.Module):
 
     @staticmethod
     def is_function(f):
-        return type(f) == types.FunctionType
+        return type(f) == types.FunctionType or type(f) == types.LambdaType
 
     # TODO support n-dimensional output
     def _init_reduction(self, reduction):
