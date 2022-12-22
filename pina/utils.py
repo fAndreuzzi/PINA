@@ -1,8 +1,6 @@
 """Utils module"""
 from functools import reduce
 
-from .label_tensor import LabelTensor
-
 
 def number_parameters(model, aggregate=True, only_trainable=True): #TODO: check
     """

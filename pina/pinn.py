@@ -1,5 +1,4 @@
 """ Module for PINN """
-from functools import reduce
 
 import torch
 
