@@ -103,9 +103,9 @@ if __name__ == "__main__":
         plotter.plot(pinn)
 
     logging.info('Net 0')
-    logging.info(model._nets[0].model.weight)
-    logging.info(model._nets[0].model.bias)
+    logging.info(model._nets[0].model[0].weight)
+    logging.info(model._nets[0].model[0].bias)
 
     logging.info('Net 1')
-    logging.info(model._nets[1].model.weight)
-    logging.info(model._nets[1].model.bias)
+    logging.info(model._nets[1].model[0].weight)
+    logging.info(model._nets[1].model[0].bias)
