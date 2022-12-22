@@ -30,7 +30,7 @@ class FeedForward(torch.nn.Module):
         :class:`torch.nn.Linear` constructor.
     """
     def __init__(self, input_variables, output_variables, inner_size=20,
-                 n_layers=2, func=nn.Tanh, layers=None, extra_features=None):
+                 n_layers=2, func=nn.Tanh, layers=None, extra_features=None, **kwargs):
         """
         """
         super().__init__()
