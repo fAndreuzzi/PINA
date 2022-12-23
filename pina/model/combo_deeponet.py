@@ -34,7 +34,7 @@ def spawn_combo_networks(
             output_variables=output_dimension,
             func=func,
             extra_features=extra_feature_func(combo),
-            **ff_kwargs
+            **ff_kwargs,
         )
         for combo in combos
     ]
@@ -65,32 +65,45 @@ class ComboDeepONet(torch.nn.Module):
             "max": lambda x: torch.max(x, **kwargs).values,
         }
 
-    def _init_aggregator(self, aggregator_symbol):
-        aggregator_funcs = ComboDeepONet._symbol_functions(dim=0)
-        if aggregator_symbol not in aggregator_funcs:
-            raise ValueError(f"Invalid aggregator: {aggregator_symbol}")
-
-        self._aggregator = aggregator_funcs[aggregator_symbol]
-        logging.info(f"Selected aggregator: {aggregator_symbol}")
-
     @staticmethod
     def is_function(f):
         return type(f) == types.FunctionType or type(f) == types.LambdaType
 
-    # TODO support n-dimensional output
+    def _init_aggregator(self, aggregator):
+        aggregator_funcs = ComboDeepONet._symbol_functions(dim=0)
+        if aggregator in aggregator_funcs:
+            aggregator_func = aggregator_funcs[aggregator]
+        elif isinstance(
+            aggregator, torch.nn.Module
+        ) or ComboDeepONet.is_function(aggregator):
+            aggregator_func = aggregator
+        else:
+            raise ValueError(f"Unsupported aggregation type {type(reduction)}")
+
+        self._aggregator = aggregator_func
+        logging.info(f"Selected aggregator: {str(aggregator_func)}")
+
+        # test the aggregator
+        if self._aggregator(torch.ones((2, 20, 3))).shape != (20, 3):
+            raise ValueError("Invalid output shape for the given aggregator")
+
     def _init_reduction(self, reduction):
-        reduction_funcs = ComboDeepONet._symbol_functions(dim=1)
+        reduction_funcs = ComboDeepONet._symbol_functions(dim=2)
         if reduction in reduction_funcs:
             reduction_func = reduction_funcs[reduction]
-        elif isinstance(reduction, torch.nn.Module):
-            reduction_func = reduction
-        elif ComboDeepONet.is_function(reduction):
+        elif isinstance(
+            reduction, torch.nn.Module
+        ) or ComboDeepONet.is_function(reduction):
             reduction_func = reduction
         else:
             raise ValueError(f"Unsupported reduction type {type(reduction)}")
 
         self._reduction = reduction_func
-        logging.info(f"Selected reduction: {reduction}")
+        logging.info(f"Selected reduction: {str(reduction)}")
+
+        # test the reduction
+        if self._reduction(torch.ones((20, 3, 4))).shape != (20, 3):
+            raise ValueError("Invalid output shape for the given reduction")
 
     @staticmethod
     def _all_nets_same_output_layer_size(nets):
@@ -106,11 +119,16 @@ class ComboDeepONet(torch.nn.Module):
         nets_outputs = tuple(
             net(x.extract(net.input_variables)) for net in self._nets
         )
-        aggregated_nets_outputs = self._aggregator(torch.stack(nets_outputs))
-
-        output_ = self._reduction(aggregated_nets_outputs)
+        aggregated = self._aggregator(torch.stack(nets_outputs))
+        aggregated_reshaped = aggregated.view(
+            (len(x), len(self.output_variables), -1)
+        )
+        output_ = self._reduction(aggregated_reshaped)
         if output_.ndim == 1:
             output_ = output_[:, None]
+
+        assert output_.shape == (len(x), len(self.output_variables))
+
         output_ = output_.as_subclass(LabelTensor)
         output_.labels = self.output_variables
         return output_
