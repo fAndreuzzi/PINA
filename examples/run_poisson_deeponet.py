@@ -80,12 +80,13 @@ if __name__ == "__main__":
     combos = tuple(map(lambda combo: combo.split("-"), args.combos.split(",")))
     check_combos(combos, poisson_problem.input_variables)
 
+    extra_feature = (lambda combo: [myFeature(combo)]) if args.extra else None
     networks = spawn_combo_networks(
         combos=combos,
         layers=list(map(int, args.layers.split(","))) if args.layers else [],
-        output_dimension=args.hidden,
+        output_dimension=args.hidden * len(poisson_problem.output_variables),
         func=Softplus,
-        extra_feature=(lambda combo: [myFeature(combo)]) if args.extra else None,
+        extra_feature=extra_feature,
         bias=not args.nobias,
     )
 
@@ -102,7 +103,7 @@ if __name__ == "__main__":
             20, "grid", locations=["gamma1", "gamma2", "gamma3", "gamma4"]
         )
         pinn.span_pts(20, "grid", locations=["D"])
-        pinn.train(1.e-10, 100)
+        pinn.train(1.0e-10, 100)
         pinn.save_state("pina.poisson_{}".format(args.id_run))
     else:
         pinn.load_state("pina.poisson_{}".format(args.id_run))
