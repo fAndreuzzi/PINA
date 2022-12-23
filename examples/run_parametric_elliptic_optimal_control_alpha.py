@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 import torch
 from torch.nn import Softplus
@@ -7,6 +6,8 @@ from pina import PINN, LabelTensor, Plotter
 from pina.model import MultiFeedForward
 from problems.parametric_elliptic_optimal_control_alpha_variable import (
     ParametricEllipticOptimalControl)
+
+from utils import setup_generic_run_parser, setup_extra_features_parser
 
 
 class myFeature(torch.nn.Module):
