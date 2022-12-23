@@ -48,7 +48,8 @@ class ComboDeepONet(torch.nn.Module):
         self.output_dimension = len(output_variables)
 
         self._init_aggregator(aggregator)
-        self._init_reduction(reduction)
+        hidden_size = nets[0].model[-1].out_features
+        self._init_reduction(reduction, hidden_size=hidden_size)
 
         if not ComboDeepONet._all_nets_same_output_layer_size(nets):
             raise ValueError("All networks should have the same output size")
@@ -87,7 +88,7 @@ class ComboDeepONet(torch.nn.Module):
         if self._aggregator(torch.ones((2, 20, 3))).shape != (20, 3):
             raise ValueError("Invalid output shape for the given aggregator")
 
-    def _init_reduction(self, reduction):
+    def _init_reduction(self, reduction, hidden_size):
         reduction_funcs = ComboDeepONet._symbol_functions(dim=2)
         if reduction in reduction_funcs:
             reduction_func = reduction_funcs[reduction]
@@ -95,6 +96,8 @@ class ComboDeepONet(torch.nn.Module):
             reduction, torch.nn.Module
         ) or ComboDeepONet.is_function(reduction):
             reduction_func = reduction
+        elif reduction == "linear":
+            reduction_func = nn.Linear(hidden_size, len(self.output_variables))
         else:
             raise ValueError(f"Unsupported reduction type {type(reduction)}")
 
@@ -102,7 +105,8 @@ class ComboDeepONet(torch.nn.Module):
         logging.info(f"Selected reduction: {str(reduction)}")
 
         # test the reduction
-        if self._reduction(torch.ones((20, 3, 4))).shape != (20, 3):
+        test = self._reduction(torch.ones((20, 3, hidden_size)))
+        if test.ndim < 2 or tuple(test.shape)[:2] != (20, 3):
             raise ValueError("Invalid output shape for the given reduction")
 
     @staticmethod
@@ -124,8 +128,8 @@ class ComboDeepONet(torch.nn.Module):
             (len(x), len(self.output_variables), -1)
         )
         output_ = self._reduction(aggregated_reshaped)
-        if output_.ndim == 1:
-            output_ = output_[:, None]
+        if output_.ndim == 3 and output_.shape[2] == 1:
+            output_ = output_[..., 0]
 
         assert output_.shape == (len(x), len(self.output_variables))
 
