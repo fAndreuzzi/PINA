@@ -25,9 +25,11 @@ class myFeature(torch.nn.Module):
         return LabelTensor(t, ['sin(x)sin(y)'])
 
 if __name__ == "__main__":
-    args = setup_extra_features_parser(  #
-        setup_generic_run_parser()  #
+    # fmt: off
+    args = setup_extra_features_parser(
+        setup_generic_run_parser()
     ).parse_args()
+    # fmt: on
 
     feat = [myFeature()] if args.extra else []
 
