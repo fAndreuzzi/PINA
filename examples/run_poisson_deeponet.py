@@ -1,3 +1,6 @@
+import argparse
+import logging
+
 import torch
 from torch.nn import Softplus
 
@@ -10,22 +13,25 @@ from pina.model.combo_deeponet import (
     FeedForward,
 )
 from problems.poisson import Poisson
-
-import argparse
-import logging
+from utils import (
+    setup_generic_run_parser,
+    setup_extra_features_parser,
+    setup_deeponet_parser,
+    prepare_deeponet_model,
+)
 
 logging.basicConfig(
     filename="poisson_deeponet.log", filemode="w", level=logging.INFO
 )
 
 
-class myFeature(torch.nn.Module):
+class SinFeature(torch.nn.Module):
     """
     Feature: sin(x)
     """
 
     def __init__(self, label):
-        super(myFeature, self).__init__()
+        super(SinFeature, self).__init__()
 
         if not isinstance(label, (tuple, list)):
             label = [label]
@@ -37,75 +43,30 @@ class myFeature(torch.nn.Module):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run PINA")
-
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-s", "-save", action="store_true")
-    group.add_argument("-l", "-load", action="store_true")
-    parser.add_argument("id_run", help="number of run", type=int)
-
-    parser.add_argument("--nobias", action="store_true")
-
-    parser.add_argument(
-        "--combos",
-        help="DeepONet internal network combinations",
-        type=str,
-        required=True,
-    )
-    parser.add_argument("--extra", help="extra features", action="store_true")
-
-    parser.add_argument(
-        "--aggregator", help="Aggregator for DeepONet", type=str, default="*"
-    )
-    parser.add_argument(
-        "--reduction", help="Reduction for DeepONet", type=str, default="+"
-    )
-
-    parser.add_argument(
-        "--hidden",
-        help="Number of variables in the hidden DeepONet layer",
-        type=int,
-        required=True,
-    )
-    parser.add_argument(
-        "--layers",
-        help="Structure of the DeepONet partial layers",
-        type=str,
-        required=True,
-    )
-    args = parser.parse_args()
+    # fmt: off
+    args = setup_deeponet_parser(
+        setup_extra_features_parser(
+            setup_generic_run_parser()
+        )
+    ).parse_args()
+    # fmt: on
 
     poisson_problem = Poisson()
 
-    combos = tuple(map(lambda combo: combo.split("-"), args.combos.split(",")))
-    check_combos(combos, poisson_problem.input_variables)
-
-    extra_feature = (lambda combo: [myFeature(combo)]) if args.extra else None
-    networks = spawn_combo_networks(
-        combos=combos,
-        layers=list(map(int, args.layers.split(","))) if args.layers else [],
-        output_dimension=args.hidden * len(poisson_problem.output_variables),
-        func=Softplus,
-        extra_feature=extra_feature,
-        bias=not args.nobias,
+    model = prepare_deeponet_model(
+        args,
+        problem,
+        extra_feature_combo_func=lambda combo: [SinFeature(combo)],
     )
-
-    model = ComboDeepONet(
-        networks,
-        poisson_problem.output_variables,
-        aggregator=args.aggregator,
-        reduction=args.reduction,
-    )
-
     pinn = PINN(poisson_problem, model, lr=0.01, regularizer=1e-8)
-    if args.s:
+    if args.save:
         pinn.span_pts(
             20, "grid", locations=["gamma1", "gamma2", "gamma3", "gamma4"]
         )
         pinn.span_pts(20, "grid", locations=["D"])
         pinn.train(1.0e-10, 100)
         pinn.save_state("pina.poisson_{}".format(args.id_run))
-    else:
+    if args.load:
         pinn.load_state("pina.poisson_{}".format(args.id_run))
         plotter = Plotter()
         plotter.plot(pinn)

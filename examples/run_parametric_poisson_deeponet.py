@@ -12,38 +12,20 @@ from problems.parametric_poisson import ParametricPoisson
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run PINA")
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-s", "-save", action="store_true")
-    group.add_argument("-l", "-load", action="store_true")
-    parser.add_argument("id_run", help="number of run", type=int)
-    parser.add_argument(
-        "--combos", help="DeepONet internal network combinations", type=str
-    )
-    parser.add_argument(
-        "--aggregator", help="Aggregator for DeepONet", type=str
-    )
-    parser.add_argument(
-        "--hidden", help="Number of variables in the hidden DeepONet layer", type=int
-    )
-    parser.add_argument(
-        "--layers", help="Structure of the DeepONet partial layers", type=str
-    )
-    args = parser.parse_args()
+    # fmt: off
+    args = setup_deeponet_parser(
+        setup_generic_run_parser()
+    ).parse_args()
+    # fmt: on
 
     poisson_problem = ParametricPoisson()
 
-    hidden_layers = list(map(int, args.layers.split(',')))
-    combos = tuple(map(lambda combo: combo.split("-"), args.combos.split(",")))
-    check_combos(combos, poisson_problem.input_variables)
-    networks = spawn_combo_networks(combos, hidden_layers, args.hidden, Softplus)
-
-    model = ComboDeepONet(
-        networks, poisson_problem.output_variables, aggregator=args.aggregator
+    model = prepare_deeponet_model(
+        args,
+        poisson_problem,
     )
-
     pinn = PINN(poisson_problem, model, lr=0.006, regularizer=1e-6)
-    if args.s:
+    if args.save:
         pinn.span_pts(
             {"variables": ["x", "y"], "mode": "random", "n": 100},
             {"variables": ["mu1", "mu2"], "mode": "grid", "n": 5},
@@ -56,7 +38,7 @@ if __name__ == "__main__":
         )
         pinn.train(10000, 100)
         pinn.save_state("pina.poisson_param_{}".format(args.id_run))
-    else:
+    if args.load:
         pinn.load_state("pina.poisson_param_{}".format(args.id_run))
         plotter = Plotter()
         plotter.plot(pinn, fixed_variables={"mu1": 0, "mu2": 1}, levels=21)
