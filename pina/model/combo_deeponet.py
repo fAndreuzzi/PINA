@@ -4,10 +4,10 @@ import torch.nn as nn
 
 from pina import LabelTensor
 from pina.model import FeedForward
+from pina.utils import is_function
 
 from functools import reduce, partial
 import logging
-import types
 
 
 def check_combos(combos, variables):
@@ -22,7 +22,7 @@ def check_combos(combos, variables):
 def spawn_combo_networks(
     combos, layers, output_dimension, func, extra_feature, **ff_kwargs
 ):
-    if not ComboDeepONet.is_function(extra_feature):
+    if not is_function(extra_feature):
         extra_feature_func = lambda _: extra_feature
     else:
         extra_feature_func = extra_feature
@@ -66,17 +66,13 @@ class ComboDeepONet(torch.nn.Module):
             "max": lambda x: torch.max(x, **kwargs).values,
         }
 
-    @staticmethod
-    def is_function(f):
-        return type(f) == types.FunctionType or type(f) == types.LambdaType
-
     def _init_aggregator(self, aggregator):
         aggregator_funcs = ComboDeepONet._symbol_functions(dim=0)
         if aggregator in aggregator_funcs:
             aggregator_func = aggregator_funcs[aggregator]
-        elif isinstance(
-            aggregator, torch.nn.Module
-        ) or ComboDeepONet.is_function(aggregator):
+        elif isinstance(aggregator, torch.nn.Module) or is_function(
+            aggregator
+        ):
             aggregator_func = aggregator
         else:
             raise ValueError(f"Unsupported aggregation type {type(reduction)}")
@@ -92,9 +88,7 @@ class ComboDeepONet(torch.nn.Module):
         reduction_funcs = ComboDeepONet._symbol_functions(dim=2)
         if reduction in reduction_funcs:
             reduction_func = reduction_funcs[reduction]
-        elif isinstance(
-            reduction, torch.nn.Module
-        ) or ComboDeepONet.is_function(reduction):
+        elif isinstance(reduction, torch.nn.Module) or is_function(reduction):
             reduction_func = reduction
         elif reduction == "linear":
             reduction_func = nn.Linear(hidden_size, len(self.output_variables))

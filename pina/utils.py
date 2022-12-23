@@ -85,6 +85,10 @@ def torch_lhs(n, dim):
     return samples
 
 
+def is_function(f):
+    return type(f) == types.FunctionType or type(f) == types.LambdaType
+
+
 class PinaDataset():
 
     def __init__(self, pinn) -> None:
