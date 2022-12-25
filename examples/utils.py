@@ -1,12 +1,20 @@
 import argparse
 
+from torch.nn import Softplus
+
+from pina.model.combo_deeponet import (
+    ComboDeepONet,
+    spawn_combo_networks,
+    check_combos,
+)
+
 
 def _init_parser():
     return argparse.ArgumentParser(description="Run PINA")
 
 
 def _extra_enabled(args):
-    return hasattr("extra", args) and args.extra
+    return hasattr(args, "extra") and args.extra
 
 
 def setup_generic_run_parser(parser=None):
@@ -61,6 +69,8 @@ def setup_deeponet_parser(parser=None):
         type=str,
         required=True,
     )
+
+    return parser
 
 
 def prepare_deeponet_model(args, problem, extra_feature_combo_func=None):

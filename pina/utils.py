@@ -1,5 +1,7 @@
 """Utils module"""
 from functools import reduce
+import types
+
 import torch
 from torch.utils.data import DataLoader, default_collate, ConcatDataset
 

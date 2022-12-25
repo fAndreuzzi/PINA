@@ -1,17 +1,8 @@
-import argparse
 import logging
 
 import torch
-from torch.nn import Softplus
 
-from pina import Plotter, LabelTensor, PINN
-from pina.model import FeedForward
-from pina.model.combo_deeponet import (
-    ComboDeepONet,
-    spawn_combo_networks,
-    check_combos,
-    FeedForward,
-)
+from pina import Plotter, PINN, LabelTensor
 from problems.poisson import Poisson
 from utils import (
     setup_generic_run_parser,
@@ -55,7 +46,7 @@ if __name__ == "__main__":
 
     model = prepare_deeponet_model(
         args,
-        problem,
+        poisson_problem,
         extra_feature_combo_func=lambda combo: [SinFeature(combo)],
     )
     pinn = PINN(poisson_problem, model, lr=0.01, regularizer=1e-8)
